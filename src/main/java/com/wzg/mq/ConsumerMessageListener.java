@@ -40,6 +40,5 @@ public class ConsumerMessageListener implements IMsgListener  {
 	
 	public void doMain(String str) {
 		doMainService.saveZfb(str);
-//		System.out.println(1/0);
 	}
 }

@@ -60,6 +60,6 @@ public class DoMainService implements IDoMainService {
 		produce.sendMsg(BANK_BACK_MSG, msgstr);
 		//stp4 通过缓存保存已经处理过的银行Gid
 		setOp.add(REDIS_BANK1_GID_KEY, bankGid);
-//		System.out.println(1/0);
+		System.out.println(1/0);
 	}
 }
