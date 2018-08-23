@@ -5,21 +5,19 @@ package com.wzg.service;
 
 import java.util.Date;
 import java.util.List;
-
 import javax.annotation.Resource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.google.gson.Gson;
 import com.wzg.dao.IJdbcZfbDao;
 import com.wzg.dao.ZfbRepository;
 import com.wzg.entity.Zfb;
 import com.wzg.mq.Produce;
+import com.wzg.remote.RemoteService2;
 /**
  * @author wuzhigang
  *
@@ -27,6 +25,8 @@ import com.wzg.mq.Produce;
 @Service
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class DoMainService implements IDoMainService {
+	@Autowired
+	private RemoteService2 remoteService2;
 	private String REDIS_BANK1_GID_KEY = "set.bank1.gid";
 	private String BANK_BACK_MSG = "bank1.back";
 	@Resource
@@ -46,6 +46,7 @@ public class DoMainService implements IDoMainService {
 		//stp1 保证幂等性
 		SetOperations setOp = redisTemplate.opsForSet();
 		//已经saved过的bank1的gid
+		//判断是否存在过此id
 		boolean isExist = setOp.isMember(REDIS_BANK1_GID_KEY, bankGid);
 		if (isExist) {
 			return;
@@ -55,11 +56,12 @@ public class DoMainService implements IDoMainService {
 		zfb.setLasttime(new Date());
 		//stp2 saveZfb
 		zfbRepository.saveAndFlush(zfb);
+		// TODO 可以直接调用A服务的方法处理 
+//		discoveryClient.getApplications().getRegisteredApplications();
 		String msgstr = "{success:true, gid:"+ bankGid +"}";
-		//stp3 返回消息给bank端
-		produce.sendMsg(BANK_BACK_MSG, msgstr);
+		remoteService2.msgBack(msgstr);
+//		produce.sendMsg(BANK_BACK_MSG, msgstr);
 		//stp4 通过缓存保存已经处理过的银行Gid
 		setOp.add(REDIS_BANK1_GID_KEY, bankGid);
-		System.out.println(1/0);
 	}
 }
